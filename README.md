@@ -18,6 +18,7 @@ Unicorn wrapper that restarts the server when a file changes (inspired by http:/
     UnicornDirectoryWatcher.call(
       app_name,
         root_dir,
+        :pid_file => "#{root_dir}/tmp/pids/unicorn.pid",
         :watcher_globs => {
           root_dir => "{app,lib,services,vendor}/**/*.rb"
         }
