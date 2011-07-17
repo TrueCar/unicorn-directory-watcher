@@ -30,7 +30,7 @@ module UnicornDirectoryWatcher
       end
 
       # start the unicorn
-      yield
+      yield(self)
 
       # get the pid
       system "touch #{pidfile}"
