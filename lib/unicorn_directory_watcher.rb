@@ -59,7 +59,10 @@ module UnicornDirectoryWatcher
         # wrap this in a lambda, just to avoid repeating it
       stop = lambda { |sig|
         master_pid.call.tap do |pid|
-          Process.kill :QUIT, pid if pid
+          begin
+            Process.kill :QUIT, pid if pid
+          rescue Errno::ESRCH
+          end
         end
         directory_watchers.each do |dw|
           dw.stop
