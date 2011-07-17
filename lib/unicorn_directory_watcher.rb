@@ -7,18 +7,15 @@ module UnicornDirectoryWatcher
   end
 
   class Runner
-    attr_reader :app_name, :root_dir, :watcher_globs, :log_dir, :pid_dir
+    attr_reader :app_name, :root_dir, :watcher_globs, :pid_file
 
     def initialize(app_name, root_dir, params={})
       @app_name, @root_dir = app_name, root_dir
       @watcher_globs = params[:watcher_globs] || {
         root_dir => "{app,lib,vendor}/**/*.rb"
       }
-      @log_dir = (params[:log_dir] || "#{root_dir}/log").tap do |dir|
-        FileUtils.mkdir_p(dir)
-      end
-      @pid_dir = (params[:pid_dir] || "#{root_dir}/tmp/pids").tap do |dir|
-        FileUtils.mkdir_p(dir)
+      @pid_file = (params[:pid_file] || "#{root_dir}/tmp/pids/unicorn.pid").tap do |pid_file|
+        FileUtils.mkdir_p File.dirname(File.expand_path(pid_file))
       end
     end
 
@@ -32,11 +29,8 @@ module UnicornDirectoryWatcher
       # start the unicorn
       yield(self)
 
-      # get the pid
-      system "touch #{pidfile}"
-
       master_pid = lambda do
-        File.open(pidfile) { |f| f.read }.chomp.to_i
+        File.exists?(pid_file) ? File.read(pid_file).strip.to_i : nil
       end
 
       directory_watchers = watcher_globs.map do |dir, glob|
@@ -64,7 +58,9 @@ module UnicornDirectoryWatcher
 
         # wrap this in a lambda, just to avoid repeating it
       stop = lambda { |sig|
-        Process.kill :QUIT, master_pid.call # kill unicorn
+        master_pid.call.tap do |pid|
+          Process.kill :QUIT, pid if pid
+        end
         directory_watchers.each do |dw|
           dw.stop
         end
@@ -77,11 +73,6 @@ module UnicornDirectoryWatcher
         dw.start
       end
       sleep
-    end
-
-    protected
-    def pidfile
-      "#{pid_dir}/unicorn.pid"
     end
   end
 end
