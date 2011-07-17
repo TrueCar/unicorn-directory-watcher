@@ -7,13 +7,19 @@ module UnicornDirectoryWatcher
   end
 
   class Runner
-    attr_reader :app_name, :root_dir, :watcher_globs
+    attr_reader :app_name, :root_dir, :watcher_globs, :log_dir, :pid_dir
 
     def initialize(app_name, root_dir, params={})
       @app_name, @root_dir = app_name, root_dir
       @watcher_globs = params[:watcher_globs] || {
         root_dir => "{app,lib,vendor}/**/*.rb"
       }
+      @log_dir = (params[:log_dir] || "#{root_dir}/log").tap do |dir|
+        FileUtils.mkdir_p(dir)
+      end
+      @pid_dir = (params[:pid_dir] || "#{root_dir}/tmp/pids").tap do |dir|
+        FileUtils.mkdir_p(dir)
+      end
     end
 
     def call(&block)
@@ -23,9 +29,8 @@ module UnicornDirectoryWatcher
         EM.epoll = true
       end
 
-      FileUtils.mkdir_p("#{root_dir}/log")
-      ENV["UNICORN_STDERR_PATH"] = "#{root_dir}/log/#{app_name}.development.stderr.log"
-      ENV["UNICORN_STDOUT_PATH"] = "#{root_dir}/log/#{app_name}.development.stdout.log"
+      ENV["UNICORN_STDERR_PATH"] = "#{log_dir}/#{app_name}.development.stderr.log"
+      ENV["UNICORN_STDOUT_PATH"] = "#{log_dir}/#{app_name}.development.stdout.log"
 
       tail_stderr_log = fork do
         system "tail -f #{ENV["UNICORN_STDERR_PATH"]}"
@@ -37,7 +42,7 @@ module UnicornDirectoryWatcher
       # start the unicorn
       yield
 
-        # get the pid
+      # get the pid
       system "touch #{pidfile}"
 
       master_pid = lambda do
@@ -89,11 +94,11 @@ module UnicornDirectoryWatcher
 
     protected
     def logfile
-      "#{root_dir}/log/unicorn.log"
+      "#{log_dir}/unicorn.log"
     end
 
     def pidfile
-      "#{root_dir}/tmp/pids/unicorn.pid"
+      "#{pid_dir}/unicorn.pid"
     end
   end
 end

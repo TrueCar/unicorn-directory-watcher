@@ -22,4 +22,8 @@ Gem::Specification.new do |s|
   s.require_paths      = ["lib"]
 
   s.add_dependency "directory_watcher", ">=1.4.0"
+  s.add_dependency "eventmachine", ">=0.12"
+  s.add_dependency "rev", ">=0.3.2"
+
+  s.add_development_dependency "sinatra", ">=1.2.6"
 end
