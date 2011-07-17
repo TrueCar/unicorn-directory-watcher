@@ -29,16 +29,6 @@ module UnicornDirectoryWatcher
         EM.epoll = true
       end
 
-      ENV["UNICORN_STDERR_PATH"] = "#{log_dir}/#{app_name}.development.stderr.log"
-      ENV["UNICORN_STDOUT_PATH"] = "#{log_dir}/#{app_name}.development.stdout.log"
-
-      tail_stderr_log = fork do
-        system "tail -f #{ENV["UNICORN_STDERR_PATH"]}"
-      end
-
-        # remove the old log
-      system "rm -f -- #{logfile}"
-
       # start the unicorn
       yield
 
@@ -48,8 +38,6 @@ module UnicornDirectoryWatcher
       master_pid = lambda do
         File.open(pidfile) { |f| f.read }.chomp.to_i
       end
-
-      system "touch #{logfile}"
 
       directory_watchers = watcher_globs.map do |dir, glob|
         # watch our app for changes
@@ -70,7 +58,6 @@ module UnicornDirectoryWatcher
           end
           Process.kill :QUIT, old_pid
         end
-        Process.kill :HUP, tail_stderr_log
 
         dw
       end
@@ -93,10 +80,6 @@ module UnicornDirectoryWatcher
     end
 
     protected
-    def logfile
-      "#{log_dir}/unicorn.log"
-    end
-
     def pidfile
       "#{pid_dir}/unicorn.pid"
     end
