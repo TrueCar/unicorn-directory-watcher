@@ -1,0 +1,16 @@
+PATH
+  remote: .
+  specs:
+    unicorn-directory-watcher (0.1.0)
+      directory_watcher (>= 1.4.0)
+
+GEM
+  remote: http://rubygems.org/
+  specs:
+    directory_watcher (1.4.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  unicorn-directory-watcher!
