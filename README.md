@@ -2,6 +2,10 @@
 
 Unicorn wrapper that restarts the server when a file changes (inspired by http://namelessjon.posterous.com/?tag=unicorn)
 
+## Installation
+
+    gem install unicorn-directory-watcher
+
 ## Usage
 
     #!/usr/bin/env ruby
